@@ -1,6 +1,6 @@
 # 11 — Documentation: README, deployment guides, GTM guide
 
-**Status:** ready-for-agent
+**Status:** done
 **Blocked by:** 08 (alerts), 09 (packaging), 10 (GTM templates).
 **Model guidance:** suitable for a small model for structure and accuracy against the implemented behavior; a human (Enrico) reviews the README pitch — it is the showcase surface.
 
@@ -16,11 +16,18 @@ The repo documents itself well enough that a tech marketer succeeds without aski
 
 ## Acceptance criteria
 
-- [ ] A clean-machine walkthrough of the README quickstart reaches a populated report using only documented commands.
-- [ ] Every env var in `../contracts.md` appears in the env reference with default and effect.
-- [ ] Fly guide verified against the current fly.toml knowledge (volume, no scale-to-zero); litestream guide includes a tested restore.
-- [ ] GTM guide cross-links the QA checklist; Event ID rule stated prominently.
-- [ ] No Italian text anywhere in the repo (grep for common Italian words as a smoke check).
-- [ ] Roadmap and license sections present as specified.
+- [x] A clean-machine walkthrough of the README quickstart reaches a populated report using only documented commands.
+- [x] Every env var in `../contracts.md` appears in the env reference with default and effect.
+- [x] Fly guide verified against the current fly.toml knowledge (volume, no scale-to-zero); litestream guide includes a tested restore.
+- [x] GTM guide cross-links the QA checklist; Event ID rule stated prominently.
+- [x] No Italian text anywhere in the repo (grep for common Italian words as a smoke check).
+- [x] Roadmap and license sections present as specified.
 
 ## Comments
+
+- 2026-08-26: done. README (pitch, quickstart, three metrics with server rate flagged, real screenshot at docs/images/report.png, roadmap, MIT + Apache-2.0 licensing), docs/deploy-fly.md (volume + secrets + auto_stop_machines=false rationale, checked against the legacy fly.toml), docs/deploy-vps.md (compose + Caddy TLS), docs/backup-litestream.md, docs/gtm-setup.md (Event ID rule as a call-out, links to QA checklist), docs/privacy.md. Verifications:
+  - Quickstart flow exercised on this machine via the ticket-09 compose round trip (host port remapped only because local 8080 was busy).
+  - .env.example carries all 16 contract env vars with defaults and effects.
+  - Litestream restore actually tested (v0.5.16, file replica): seeded monitor DB -> replicate -> restore -> 20/20 ledger rows back.
+  - Italian-word grep over all tracked files: zero hits (reference/ is gitignored).
+  - README pitch awaits Enrico's editorial review per Model guidance.

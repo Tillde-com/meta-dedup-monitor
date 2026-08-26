@@ -1,0 +1,33 @@
+# One-container deployment: `ADMIN_TOKEN=<secret> docker compose up -d`.
+# The image runs with NODE_ENV=production, so an empty ADMIN_TOKEN makes the
+# container exit at boot with the safety error (set ALLOW_INSECURE=1 to
+# explicitly accept an open dashboard).
+services:
+  monitor:
+    build: .
+    ports:
+      - "${HOST_PORT:-8080}:8080" # host port is configurable, container stays on 8080
+    volumes:
+      - monitor-data:/data
+    environment:
+      # --- required for a safe production boot ---
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-} # guards /report, /api/*, /export.*
+      # --- instance identity ---
+      MONITOR_NAME: ${MONITOR_NAME:-meta-dedup-monitor}
+      # --- ingest hardening (recommended) ---
+      COLLECT_PATH_SECRET: ${COLLECT_PATH_SECRET:-} # ingest base becomes /c/<secret>
+      INGEST_KEY: ${INGEST_KEY:-} # server channel requires X-Collector-Key
+      # --- raw-capture retention (days; 0 disables the purge) ---
+      RAW_RETENTION_DAYS: ${RAW_RETENTION_DAYS:-14}
+      # --- alerting (empty threshold = disabled) ---
+      ALERT_THRESHOLD: ${ALERT_THRESHOLD:-} # e.g. 0.8
+      ALERT_WINDOW_HOURS: ${ALERT_WINDOW_HOURS:-24}
+      ALERT_CHECK_MINUTES: ${ALERT_CHECK_MINUTES:-15}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-}
+    restart: unless-stopped
+
+volumes:
+  monitor-data:

@@ -3,6 +3,7 @@ import path from 'node:path'
 import type { Context, Hono } from 'hono'
 import type { Config } from '../config.js'
 import type { AppContext } from '../app.js'
+import { extractEvents } from './extract.js'
 
 // 1x1 transparent pixel: GET ingest (sendPixel = <img>) must answer with a real
 // image or the browser blocks the response with ERR_BLOCKED_BY_ORB and GTM
@@ -35,6 +36,18 @@ export function registerIngestRoutes(app: Hono, config: Config, ctx: AppContext)
     `INSERT INTO requests (ts, source, method, path, ip, ua, content_type, query, headers, body)
      VALUES (@ts, @source, @method, @path, @ip, @ua, @content_type, @query, @headers, @body)`,
   )
+  const insertEvent = ctx.db.prepare(
+    `INSERT INTO events (request_id, ts, source, event_name, event_id, fbp, fbc, event_time, external_id, raw)
+     VALUES (@request_id, @ts, @source, @event_name, @event_id, @fbp, @fbc, @event_time, @external_id, @raw)`,
+  )
+  const storeRequest = ctx.db.transaction(
+    (row: Record<string, unknown>, queryObj: Record<string, string>, bodyText: string, contentType: string) => {
+      const requestId = insertRequest.run(row).lastInsertRowid
+      for (const ev of extractEvents(queryObj, bodyText, contentType)) {
+        insertEvent.run({ request_id: requestId, ts: row.ts, source: row.source, ...ev })
+      }
+    },
+  )
 
   async function collect(c: Context, source: 'browser' | 'server'): Promise<Response> {
     const method = c.req.method
@@ -61,6 +74,8 @@ export function registerIngestRoutes(app: Hono, config: Config, ctx: AppContext)
       }
     }
 
+    const queryObj = c.req.query()
+    const contentType = c.req.header('content-type') ?? ''
     const row = {
       ts: ctx.clock(),
       source,
@@ -68,14 +83,14 @@ export function registerIngestRoutes(app: Hono, config: Config, ctx: AppContext)
       path: new URL(c.req.url).pathname,
       ip: clientIp(c),
       ua: c.req.header('user-agent') ?? null,
-      content_type: c.req.header('content-type') ?? null,
-      query: JSON.stringify(c.req.query()),
+      content_type: contentType || null,
+      query: JSON.stringify(queryObj),
       headers: JSON.stringify(headersObj),
       body: bodyText,
     }
 
     try {
-      insertRequest.run(row)
+      storeRequest(row, queryObj, bodyText, contentType)
     } catch (e) {
       // Ingest must never lose data or slow the tag down: on any DB failure
       // park the payload in fallback.ndjson and still answer 200.

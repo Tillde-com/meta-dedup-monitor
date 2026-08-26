@@ -12,6 +12,13 @@ const MIGRATIONS: string[] = [
     ts INTEGER NOT NULL, source TEXT NOT NULL CHECK (source IN ('browser','server')),
     method TEXT NOT NULL, path TEXT NOT NULL,
     ip TEXT, ua TEXT, content_type TEXT, query TEXT, headers TEXT, body TEXT);`,
+  `CREATE TABLE events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL, ts INTEGER NOT NULL, source TEXT NOT NULL,
+    event_name TEXT, event_id TEXT, fbp TEXT, fbc TEXT,
+    event_time INTEGER, external_id TEXT, raw TEXT);
+  CREATE INDEX idx_events_event_id ON events(event_id);
+  CREATE INDEX idx_events_ts ON events(ts);`,
 ]
 
 export function openDb(dataDir: string): Database.Database {

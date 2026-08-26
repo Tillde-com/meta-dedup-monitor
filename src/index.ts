@@ -5,6 +5,7 @@ import { createApp } from './app.js'
 // The only file that reads process.env.
 const config = configFromEnv(process.env)
 const app = createApp(config)
+app.ctx.startLoops()
 
 serve({ fetch: app.fetch, port: config.port }, (info) => {
   console.log(

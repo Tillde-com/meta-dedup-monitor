@@ -4,6 +4,8 @@ import type { Database } from 'better-sqlite3'
 import type { Config } from './config.js'
 import { openDb } from './storage/db.js'
 import { registerIngestRoutes } from './ingest/index.js'
+import { createSweep } from './sweep/index.js'
+import { getStats } from './report/stats.js'
 
 export interface Notification {
   type: 'alert.fired' | 'alert.recovered' | 'alert.test'
@@ -29,6 +31,8 @@ export interface AppContext {
   db: Database
   clock: Clock
   notifier: Notifier
+  sweepTick: () => Promise<number>
+  startLoops: () => void
   close: () => void
 }
 
@@ -53,12 +57,18 @@ export function createApp(config: Config, deps: Deps = {}): App {
   const notifier = deps.notifier ?? noopNotifier
   const db = openDb(config.dataDir)
 
+  const sweep = createSweep(db)
+
   const app = new Hono() as App
   app.ctx = {
     config,
     db,
     clock,
     notifier,
+    sweepTick: sweep.tick,
+    startLoops: () => {
+      sweep.start()
+    },
     close: () => {
       if (db.open) db.close()
     },
@@ -75,7 +85,7 @@ export function createApp(config: Config, deps: Deps = {}): App {
   registerIngestRoutes(app, config, app.ctx)
 
   const admin = adminGuard(config.adminToken)
-  app.get('/api/stats', admin, (c) => c.json({ ok: false, error: 'not implemented' }, 501))
+  app.get('/api/stats', admin, (c) => c.json(getStats(db)))
 
   return app
 }

@@ -19,6 +19,29 @@ const MIGRATIONS: string[] = [
     event_time INTEGER, external_id TEXT, raw TEXT);
   CREATE INDEX idx_events_event_id ON events(event_id);
   CREATE INDEX idx_events_ts ON events(ts);`,
+  `CREATE TABLE ledger (
+    event_id TEXT PRIMARY KEY,
+    first_ts INTEGER NOT NULL, last_ts INTEGER NOT NULL,
+    day TEXT NOT NULL,
+    browser_n INTEGER NOT NULL DEFAULT 0, server_n INTEGER NOT NULL DEFAULT 0,
+    name_browser TEXT, name_server TEXT,
+    name_coherent INTEGER,
+    ua_server TEXT);
+  CREATE INDEX idx_ledger_last_ts ON ledger(last_ts);
+  CREATE INDEX idx_ledger_day ON ledger(day);
+  CREATE TABLE agg_daily (
+    day TEXT NOT NULL, event_name TEXT NOT NULL, source TEXT NOT NULL,
+    total INTEGER NOT NULL DEFAULT 0, no_id INTEGER NOT NULL DEFAULT 0,
+    ud INTEGER NOT NULL DEFAULT 0, em INTEGER NOT NULL DEFAULT 0,
+    ph INTEGER NOT NULL DEFAULT 0, extid INTEGER NOT NULL DEFAULT 0,
+    fbp INTEGER NOT NULL DEFAULT 0, fbc INTEGER NOT NULL DEFAULT 0,
+    cua INTEGER NOT NULL DEFAULT 0, cip INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, event_name, source));
+  CREATE TABLE agg_daily_dedup (
+    day TEXT NOT NULL, event_name TEXT NOT NULL,
+    ids_browser INTEGER NOT NULL DEFAULT 0, ids_server INTEGER NOT NULL DEFAULT 0,
+    ids_both INTEGER NOT NULL DEFAULT 0, name_incoherent INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, event_name));`,
 ]
 
 export function openDb(dataDir: string): Database.Database {

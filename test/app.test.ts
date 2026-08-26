@@ -29,7 +29,7 @@ describe('admin guard', () => {
   it('accepts ?token= query parameter', async () => {
     const app = makeApp(testConfig({ adminToken: 's3cret' }))
     const res = await app.request('/api/stats?token=s3cret')
-    expect(res.status).toBe(501)
+    expect(res.status).toBe(200)
   })
 
   it('accepts X-Admin-Token header', async () => {
@@ -37,7 +37,7 @@ describe('admin guard', () => {
     const res = await app.request('/api/stats', {
       headers: { 'X-Admin-Token': 's3cret' },
     })
-    expect(res.status).toBe(501)
+    expect(res.status).toBe(200)
   })
 
   it('accepts Authorization: Bearer header', async () => {
@@ -45,7 +45,7 @@ describe('admin guard', () => {
     const res = await app.request('/api/stats', {
       headers: { Authorization: 'Bearer s3cret' },
     })
-    expect(res.status).toBe(501)
+    expect(res.status).toBe(200)
   })
 
   it('rejects a wrong token', async () => {
@@ -57,7 +57,7 @@ describe('admin guard', () => {
   it('is disabled when adminToken is empty', async () => {
     const app = makeApp(testConfig({ adminToken: '' }))
     const res = await app.request('/api/stats')
-    expect(res.status).toBe(501)
+    expect(res.status).toBe(200)
   })
 })
 

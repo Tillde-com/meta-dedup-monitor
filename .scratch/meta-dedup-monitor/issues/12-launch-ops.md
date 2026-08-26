@@ -1,6 +1,6 @@
 # 12 — Launch: name, repo on Tillde-com, archive, Fly snapshot
 
-**Status:** ready-for-agent
+**Status:** claimed
 **Blocked by:** 11 (docs — the repo goes public complete).
 **Model guidance:** human-in-the-loop ticket — GitHub org and Fly dashboard steps belong to Enrico; drive them with `/wizard` where a guided script helps. Any model can orchestrate.
 

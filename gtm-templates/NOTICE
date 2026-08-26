@@ -1,0 +1,20 @@
+Meta Dedup Monitor — GTM templates
+Licensed under the Apache License, Version 2.0 (see LICENSE in this directory).
+
+These two Google Tag Manager templates are modified forks of templates
+originally developed by Stape (https://stape.io, https://github.com/stape-io)
+and licensed under the Apache License, Version 2.0:
+
+- meta-dedup-monitor-web.tpl
+  forked from "Facebook Pixel by Stape"
+  (https://github.com/stape-io/facebook-pixel-tag)
+
+- meta-dedup-monitor-server.tpl
+  forked from "Facebook Conversion API" by Stape
+  (https://github.com/stape-io/facebook-tag)
+
+Modifications (Meta Dedup Monitor project, 2026): the forks are collector-only —
+instead of sending events to Meta, they send a faithful copy of each event
+(same event_id) to a Meta Deduplication Monitor collector endpoint
+(/c/browser and /c/server respectively). Event reconstruction, hashing and
+consent logic from the original templates are unchanged.

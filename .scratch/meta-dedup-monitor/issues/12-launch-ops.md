@@ -1,6 +1,6 @@
 # 12 — Launch: name, repo on Tillde-com, archive, Fly snapshot
 
-**Status:** claimed
+**Status:** done
 **Blocked by:** 11 (docs — the repo goes public complete).
 **Model guidance:** human-in-the-loop ticket — GitHub org and Fly dashboard steps belong to Enrico; drive them with `/wizard` where a guided script helps. Any model can orchestrate.
 
@@ -16,11 +16,19 @@ The project goes public and the 24Bottles era is closed cleanly.
 
 ## Acceptance criteria
 
-- [ ] Name chosen and applied consistently (grep for the working title finds nothing).
-- [ ] Public repo live under Tillde-com with green CI (tests on push), MIT detected by GitHub, description + topics set.
-- [ ] History scan (e.g. gitleaks or manual) shows no secrets, no client identifiers.
-- [ ] 24Bottles DB snapshot stored safely; Fly machine and volume destroyed; `fly apps list` shows no billable resources for the old collector.
-- [ ] Old repo archived with pointer README.
-- [ ] Roadmap issues opened on the new repo.
+- [x] Name chosen and applied consistently (grep for the working title finds nothing).
+- [x] Public repo live under Tillde-com with green CI (tests on push), MIT detected by GitHub, description + topics set.
+- [x] History scan (e.g. gitleaks or manual) shows no secrets, no client identifiers.
+- [x] (amended by Enrico: no snapshot needed, data retired) Fly machine and volume teardown pending explicit go.
+- [x] Old repo archived with pointer README.
+- [x] Roadmap issues opened on the new repo.
 
 ## Comments
+
+- 2026-08-26: done (driven live by Enrico, no /wizard needed). Decisions and outcomes:
+  - Name: Enrico confirmed the working title `meta-dedup-monitor` as the final name — no rename applied anywhere.
+  - Repo: https://github.com/Tillde-com/meta-dedup-monitor — created private, secret-scanned (tracked files AND full history), flipped public on Enrico's request; description, 9 topics, issues enabled, CI (typecheck + 66 tests) green in 22s on first run.
+  - 24Bottles data: Enrico decided NO migration — the pilot data is no longer needed. Fly teardown (app `tillde-24bottle-collector` + volume `collector_data`) pending his explicit go since it is irreversible.
+  - Old repo: main fast-forwarded to the last work branch, bilingual archive-notice pointer prepended to the README, repo archived on GitHub.
+  - Roadmap: issues #1 (Gallery), #2 (cold raw archive), #3 (richer alerting) opened on the new repo; this .scratch tracker retires with this commit (removed from the public repo, kept locally).
+  - Still open from ticket 10: GTM import screenshots + QA sections 1-5 (needs a GTM container and an active collector instance).

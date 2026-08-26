@@ -6,6 +6,8 @@ import { openDb } from './storage/db.js'
 import { registerIngestRoutes } from './ingest/index.js'
 import { createSweep } from './sweep/index.js'
 import { createRetention } from './retention/index.js'
+import { createAlerts } from './alerts/index.js'
+import { createProductionNotifier } from './alerts/notifier.js'
 import { getStats } from './report/stats.js'
 import { renderReport } from './report/html.js'
 import { registerExportRoutes } from './report/exports.js'
@@ -36,6 +38,7 @@ export interface AppContext {
   notifier: Notifier
   sweepTick: () => Promise<number>
   retentionTick: () => Promise<number>
+  alertTick: () => Promise<void>
   startLoops: () => void
   close: () => void
 }
@@ -52,17 +55,14 @@ export function adminGuard(adminToken: string): MiddlewareHandler {
   }
 }
 
-const noopNotifier: Notifier = async () => {}
-
 export function createApp(config: Config, deps: Deps = {}): App {
   const clock = deps.clock ?? (() => Date.now())
-  // Production notification delivery (webhook/email) arrives with the alerts
-  // ticket; until then the default is a no-op.
-  const notifier = deps.notifier ?? noopNotifier
+  const notifier = deps.notifier ?? createProductionNotifier(config)
   const db = openDb(config.dataDir)
 
   const sweep = createSweep(db)
   const retention = createRetention(db, config, clock)
+  const alerts = createAlerts(db, config, clock, notifier)
 
   const app = new Hono() as App
   app.ctx = {
@@ -72,9 +72,11 @@ export function createApp(config: Config, deps: Deps = {}): App {
     notifier,
     sweepTick: sweep.tick,
     retentionTick: retention.tick,
+    alertTick: alerts.tick,
     startLoops: () => {
       sweep.start()
       retention.start()
+      alerts.start()
     },
     close: () => {
       if (db.open) db.close()
@@ -95,6 +97,11 @@ export function createApp(config: Config, deps: Deps = {}): App {
   app.get('/api/stats', admin, (c) => c.json(getStats(db)))
 
   registerExportRoutes(app, config, app.ctx, admin)
+
+  app.post('/api/alerts/test', admin, async (c) => {
+    await alerts.sendTest()
+    return c.json({ ok: true })
+  })
 
   // The report is costly to render (multiple aggregate queries + big tables):
   // a short per-instance cache absorbs dashboard refreshes.

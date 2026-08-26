@@ -4,3 +4,6 @@ data/
 reference/
 *.log
 .env
+
+# local work tracker, retired at launch (kept on disk only)
+.scratch/

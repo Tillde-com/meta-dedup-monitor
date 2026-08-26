@@ -1,6 +1,6 @@
 # 02 — Ingest channels: browser + server, auth, raw storage
 
-**Status:** ready-for-agent
+**Status:** done
 **Blocked by:** 01 (skeleton/seam).
 **Model guidance:** suitable for a small model — port work with the reference implementation at hand and fully specified contracts.
 
@@ -14,14 +14,16 @@ Scope, per contracts: base-path resolution from `COLLECT_PATH_SECRET`; browser a
 
 ## Acceptance criteria
 
-- [ ] Test: POST JSON to `/c/<secret>/browser` → 200 `{ok:true}`; one `requests` row with `source='browser'`, stored `ts` from fake clock, body persisted.
-- [ ] Test: GET `/c/<secret>/browser?event_name=Purchase` → 200, `content-type: image/gif`, body is the 43-byte transparent GIF; row stored with query string.
-- [ ] Test: with `INGEST_KEY` set, POST to server channel without `X-Collector-Key` → 401 and NO row; with correct header → 200 and row with `source='server'`.
-- [ ] Test: with `COLLECT_PATH_SECRET=abc`, requests to `/c/browser` → 404; to `/c/abc/browser` → 200.
-- [ ] Test: OPTIONS `/c/abc/browser` → 204 with `Access-Control-Allow-Origin: *`.
-- [ ] Test: body larger than `MAX_BODY_BYTES` → 413, no row.
-- [ ] Test: stored `headers` JSON contains no `authorization`, `cookie`, or `x-collector-key` keys (send all three, mixed case).
-- [ ] Test: `ip` column honors precedence `fly-client-ip` > first of `x-forwarded-for` > `x-real-ip`.
-- [ ] Test: with the DB handle forcibly closed, POST → still 200 and the payload appears as a line in `fallback.ndjson`.
+- [x] Test: POST JSON to `/c/<secret>/browser` → 200 `{ok:true}`; one `requests` row with `source='browser'`, stored `ts` from fake clock, body persisted.
+- [x] Test: GET `/c/<secret>/browser?event_name=Purchase` → 200, `content-type: image/gif`, body is the 43-byte transparent GIF; row stored with query string.
+- [x] Test: with `INGEST_KEY` set, POST to server channel without `X-Collector-Key` → 401 and NO row; with correct header → 200 and row with `source='server'`.
+- [x] Test: with `COLLECT_PATH_SECRET=abc`, requests to `/c/browser` → 404; to `/c/abc/browser` → 200.
+- [x] Test: OPTIONS `/c/abc/browser` → 204 with `Access-Control-Allow-Origin: *`.
+- [x] Test: body larger than `MAX_BODY_BYTES` → 413, no row.
+- [x] Test: stored `headers` JSON contains no `authorization`, `cookie`, or `x-collector-key` keys (send all three, mixed case).
+- [x] Test: `ip` column honors precedence `fly-client-ip` > first of `x-forwarded-for` > `x-real-ip`.
+- [x] Test: with the DB handle forcibly closed, POST → still 200 and the payload appears as a line in `fallback.ndjson`.
 
 ## Comments
+
+- 2026-08-26: done. Note: the legacy TRANSPARENT_GIF constant decodes to 42 bytes; replaced with the canonical 43-byte 1x1 transparent GIF to match the acceptance criterion (contracts.md only requires "1x1 transparent GIF", so no conflict). Body size is checked on both Content-Length and the actual body bytes.

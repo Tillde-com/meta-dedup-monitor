@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from 'hono'
 import type { Database } from 'better-sqlite3'
 import type { Config } from './config.js'
 import { openDb } from './storage/db.js'
+import { registerIngestRoutes } from './ingest/index.js'
 
 export interface Notification {
   type: 'alert.fired' | 'alert.recovered' | 'alert.test'
@@ -58,7 +59,9 @@ export function createApp(config: Config, deps: Deps = {}): App {
     db,
     clock,
     notifier,
-    close: () => db.close(),
+    close: () => {
+      if (db.open) db.close()
+    },
   }
 
   app.get('/', (c) =>
@@ -68,6 +71,8 @@ export function createApp(config: Config, deps: Deps = {}): App {
       now: new Date(clock()).toISOString(),
     }),
   )
+
+  registerIngestRoutes(app, config, app.ctx)
 
   const admin = adminGuard(config.adminToken)
   app.get('/api/stats', admin, (c) => c.json({ ok: false, error: 'not implemented' }, 501))

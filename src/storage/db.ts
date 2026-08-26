@@ -7,6 +7,11 @@ import path from 'node:path'
 // an entry that has shipped.
 const MIGRATIONS: string[] = [
   `CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT);`,
+  `CREATE TABLE requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts INTEGER NOT NULL, source TEXT NOT NULL CHECK (source IN ('browser','server')),
+    method TEXT NOT NULL, path TEXT NOT NULL,
+    ip TEXT, ua TEXT, content_type TEXT, query TEXT, headers TEXT, body TEXT);`,
 ]
 
 export function openDb(dataDir: string): Database.Database {

@@ -47,6 +47,11 @@ const MIGRATIONS: string[] = [
 export function openDb(dataDir: string): Database.Database {
   mkdirSync(dataDir, { recursive: true })
   const db = new Database(path.join(dataDir, 'events.db'))
+  // auto_vacuum must be set before the first table is created to take effect;
+  // it lets the retention purge reclaim space with PRAGMA incremental_vacuum
+  // instead of a locking VACUUM. On an existing non-auto_vacuum DB the pragma
+  // is a no-op.
+  db.pragma('auto_vacuum = INCREMENTAL')
   db.pragma('journal_mode = WAL')
   db.pragma('synchronous = NORMAL')
   db.pragma('busy_timeout = 5000')

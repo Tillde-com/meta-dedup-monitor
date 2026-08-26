@@ -1,6 +1,6 @@
 # 06 — Raw-capture retention purge
 
-**Status:** ready-for-agent
+**Status:** done
 **Blocked by:** 04 (sweep — purge must never outrun the cursor).
 **Model guidance:** suitable for a small model — small, sharply specified job with time-travel tests.
 
@@ -12,10 +12,12 @@ The DB stays small forever without operator action: a periodic retention job (te
 
 ## Acceptance criteria
 
-- [ ] Test: ingest on D0, sweep `tick()`, travel to D15 (default 14-day retention), purge `tick()` → `requests`/`events` empty, `/api/stats` unchanged (ledger/aggregates intact).
-- [ ] Test: rows within the window survive; rows beyond it are gone (mixed-age fixture).
-- [ ] Test: unswept rows beyond the window (sweep never ticked) are NOT deleted; after sweep `tick()` + purge `tick()`, they are.
-- [ ] Test: `RAW_RETENTION_DAYS=0` → purge `tick()` deletes nothing.
-- [ ] Test: purge of a large batch (e.g. 5k rows) completes without blocking ingest (batched deletes, same yielding pattern as sweep).
+- [x] Test: ingest on D0, sweep `tick()`, travel to D15 (default 14-day retention), purge `tick()` → `requests`/`events` empty, `/api/stats` unchanged (ledger/aggregates intact).
+- [x] Test: rows within the window survive; rows beyond it are gone (mixed-age fixture).
+- [x] Test: unswept rows beyond the window (sweep never ticked) are NOT deleted; after sweep `tick()` + purge `tick()`, they are.
+- [x] Test: `RAW_RETENTION_DAYS=0` → purge `tick()` deletes nothing.
+- [x] Test: purge of a large batch (e.g. 5k rows) completes without blocking ingest (batched deletes, same yielding pattern as sweep).
 
 ## Comments
+
+- 2026-08-26: done. Space reclaim choice: the DB is created with `auto_vacuum=INCREMENTAL` (must be set before the first table exists) and the purge runs `PRAGMA incremental_vacuum` after each round — no locking VACUUM; on a DB created without auto_vacuum the pragma is a harmless no-op (documented in code). Purge loop runs hourly in production.

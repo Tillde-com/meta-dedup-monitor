@@ -5,6 +5,7 @@ import type { Config } from './config.js'
 import { openDb } from './storage/db.js'
 import { registerIngestRoutes } from './ingest/index.js'
 import { createSweep } from './sweep/index.js'
+import { createRetention } from './retention/index.js'
 import { getStats } from './report/stats.js'
 import { renderReport } from './report/html.js'
 
@@ -33,6 +34,7 @@ export interface AppContext {
   clock: Clock
   notifier: Notifier
   sweepTick: () => Promise<number>
+  retentionTick: () => Promise<number>
   startLoops: () => void
   close: () => void
 }
@@ -59,6 +61,7 @@ export function createApp(config: Config, deps: Deps = {}): App {
   const db = openDb(config.dataDir)
 
   const sweep = createSweep(db)
+  const retention = createRetention(db, config, clock)
 
   const app = new Hono() as App
   app.ctx = {
@@ -67,8 +70,10 @@ export function createApp(config: Config, deps: Deps = {}): App {
     clock,
     notifier,
     sweepTick: sweep.tick,
+    retentionTick: retention.tick,
     startLoops: () => {
       sweep.start()
+      retention.start()
     },
     close: () => {
       if (db.open) db.close()

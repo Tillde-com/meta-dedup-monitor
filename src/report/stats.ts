@@ -18,6 +18,46 @@ function rates(idsBrowser: number, idsServer: number, idsBoth: number): Rates {
   }
 }
 
+export interface DedupBreakdown {
+  idsBrowser: number
+  idsServer: number
+  idsBoth: number
+  nameIncoherent: number
+  rates: Rates
+}
+
+export interface UserDataRow {
+  eventName: string
+  source: string
+  total: number
+  ud: number
+  em: number
+  ph: number
+  extid: number
+  fbp: number
+  fbc: number
+  cua: number
+  cip: number
+}
+
+export interface StatsResponse {
+  totals: {
+    requests: { browser: number; server: number }
+    events: { browser: number; server: number }
+    idsBrowser: number
+    idsServer: number
+    idsBoth: number
+    nameIncoherent: number
+    dedupable: number
+    rates: Rates
+  }
+  byEventName: Array<DedupBreakdown & { name: string }>
+  timeseries: Array<DedupBreakdown & { day: string }>
+  userData: UserDataRow[]
+  serverOnlyUserAgents: Array<{ ua: string; count: number }>
+  sweep: { cursor: number; maxId: number; behind: number }
+}
+
 interface DedupSums {
   ids_browser: number | null
   ids_server: number | null
@@ -25,7 +65,7 @@ interface DedupSums {
   name_incoherent: number | null
 }
 
-export function getStats(db: Database): Record<string, unknown> {
+export function getStats(db: Database): StatsResponse {
   const metaNum = (k: string): number => {
     const row = db.prepare('SELECT v FROM meta WHERE k = ?').get(k) as { v: string } | undefined
     return row ? Number(row.v) : 0
@@ -92,8 +132,8 @@ export function getStats(db: Database): Record<string, unknown> {
          FROM agg_daily GROUP BY event_name, source
          ORDER BY total DESC, event_name, source`,
       )
-      .all() as Array<Record<string, unknown> & { event_name: string }>
-  ).map(({ event_name, ...rest }) => ({ eventName: event_name, ...rest }))
+      .all() as Array<UserDataRow & { event_name: string }>
+  ).map(({ event_name, ...rest }) => ({ ...rest, eventName: event_name }))
 
   const serverOnlyUserAgents = db
     .prepare(
@@ -101,7 +141,7 @@ export function getStats(db: Database): Record<string, unknown> {
        WHERE browser_n = 0 AND server_n > 0
        GROUP BY ua_server ORDER BY count DESC LIMIT 10`,
     )
-    .all()
+    .all() as Array<{ ua: string; count: number }>
 
   const cursor = metaNum('cursor')
   // Last assigned events id from sqlite's autoincrement bookkeeping, so the

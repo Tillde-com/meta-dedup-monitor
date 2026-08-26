@@ -6,6 +6,7 @@ import { openDb } from './storage/db.js'
 import { registerIngestRoutes } from './ingest/index.js'
 import { createSweep } from './sweep/index.js'
 import { getStats } from './report/stats.js'
+import { renderReport } from './report/html.js'
 
 export interface Notification {
   type: 'alert.fired' | 'alert.recovered' | 'alert.test'
@@ -86,6 +87,20 @@ export function createApp(config: Config, deps: Deps = {}): App {
 
   const admin = adminGuard(config.adminToken)
   app.get('/api/stats', admin, (c) => c.json(getStats(db)))
+
+  // The report is costly to render (multiple aggregate queries + big tables):
+  // a short per-instance cache absorbs dashboard refreshes.
+  const REPORT_CACHE_TTL_MS = 15_000
+  let reportCache: { html: string; ts: number } | null = null
+  app.get('/report', admin, (c) => {
+    const now = clock()
+    if (reportCache && now - reportCache.ts < REPORT_CACHE_TTL_MS) {
+      return c.html(reportCache.html)
+    }
+    const html = renderReport(getStats(db), config.monitorName, new Date(now).toISOString())
+    reportCache = { html, ts: now }
+    return c.html(html)
+  })
 
   return app
 }

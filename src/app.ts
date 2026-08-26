@@ -8,6 +8,7 @@ import { createSweep } from './sweep/index.js'
 import { createRetention } from './retention/index.js'
 import { getStats } from './report/stats.js'
 import { renderReport } from './report/html.js'
+import { registerExportRoutes } from './report/exports.js'
 
 export interface Notification {
   type: 'alert.fired' | 'alert.recovered' | 'alert.test'
@@ -92,6 +93,8 @@ export function createApp(config: Config, deps: Deps = {}): App {
 
   const admin = adminGuard(config.adminToken)
   app.get('/api/stats', admin, (c) => c.json(getStats(db)))
+
+  registerExportRoutes(app, config, app.ctx, admin)
 
   // The report is costly to render (multiple aggregate queries + big tables):
   // a short per-instance cache absorbs dashboard refreshes.
